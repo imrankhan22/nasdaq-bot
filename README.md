@@ -2,7 +2,7 @@
 
 Watches every company on NASDAQ's
 [non-compliant company list](https://www.nasdaq.com/market-activity/stocks/non-compliant-company-list)
-and sends a **Telegram alert** whenever a stock's price moves **≥ 50%** since
+and sends a **Telegram alert** whenever a stock's price moves **≥ 25%** since
 the previous check. It runs **every ~16 minutes** on GitHub Actions — no server
 required.
 
@@ -67,7 +67,7 @@ All optional, set as env vars (or GitHub secrets/variables):
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `THRESHOLD_PCT` | `50` | % move since last check that triggers an alert |
+| `THRESHOLD_PCT` | `25` | % move since last check that triggers an alert |
 | `DIRECTION` | `up` | `up` = only rises; `any` = rises **or** falls |
 | `DRY_RUN` | `false` | `true` = log alerts instead of sending them |
 | `MAX_WORKERS` | `8` | Concurrent price requests |
@@ -90,8 +90,8 @@ state.json      # persisted last prices (updated each run)
 
 - NASDAQ's quote endpoints are **undocumented** and could change without
   notice; the monitor fails safe (logs and skips) if a request breaks.
-- A 50% move is large; for these low-priced stocks it does happen, but expect
-  alerts to be infrequent. Lower `THRESHOLD_PCT` to test.
+- A 25% move is sizable; for these low-priced stocks it does happen, but
+  expect alerts to be infrequent. Adjust `THRESHOLD_PCT` to tune sensitivity.
 - Prices update during market hours; outside hours consecutive runs will show
   no change.
 ```

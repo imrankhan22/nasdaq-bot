@@ -14,7 +14,7 @@ TELEGRAM_CHAT_ID: str = os.getenv("TELEGRAM_CHAT_ID", "").strip()
 
 # --- Alert logic ---------------------------------------------------------
 # Percentage move (since the previous check) that triggers an alert.
-THRESHOLD_PCT: float = float(os.getenv("THRESHOLD_PCT", "50"))
+THRESHOLD_PCT: float = float(os.getenv("THRESHOLD_PCT", "25"))
 
 # "up"  -> alert only when price rises by >= THRESHOLD_PCT
 # "any" -> alert on a move of >= THRESHOLD_PCT in either direction
