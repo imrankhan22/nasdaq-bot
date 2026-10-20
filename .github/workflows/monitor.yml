@@ -1,0 +1,57 @@
+name: Stock price monitor
+
+on:
+  schedule:
+    # Approximately every 16 minutes. GitHub cron cannot express a true
+    # 16-minute cadence and may delay runs under load; the 50% logic keys
+    # off the stored last price, so timing drift does not break alerts.
+    - cron: "*/16 * * * *"
+  workflow_dispatch: {}  # allow manual runs from the Actions tab
+
+# Allow the workflow to commit the updated state.json back to the repo.
+permissions:
+  contents: write
+
+concurrency:
+  # Never let two runs overlap and fight over state.json.
+  group: stock-monitor
+  cancel-in-progress: false
+
+jobs:
+  check-prices:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run monitor
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          # Optional overrides (uncomment to use):
+          # THRESHOLD_PCT: "50"
+          # DIRECTION: "up"
+        run: python -m monitor.main
+
+      - name: Commit updated state
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if ! git diff --quiet -- state.json; then
+            git add state.json
+            git commit -m "chore: update price state [skip ci]"
+            # Rebase on any new commits, then push (retry once).
+            git pull --rebase --autostash origin "${GITHUB_REF_NAME}" || true
+            git push || (git pull --rebase --autostash origin "${GITHUB_REF_NAME}" && git push)
+          else
+            echo "No state change."
+          fi
